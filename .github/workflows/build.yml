@@ -1,0 +1,91 @@
+name: Construir Bloody Roar 2 Mobile
+
+# Toma el APK v1.0 oficial de nevertheaxolot, le aplica el icono y el nombre
+# de este repo, lo firma con tu llave y lo publica.
+#   - Cada cambio en "main" deja el APK como artefacto descargable (pestaña Actions).
+#   - Si creas una etiqueta v* (ej. v1.0-mobile.2) también se publica como Release.
+#
+# Secretos necesarios (Settings > Secrets and variables > Actions):
+#   KEYSTORE_BASE64    la llave br2mobile.jks convertida a base64
+#   KEYSTORE_PASSWORD  la contraseña de esa llave
+# Sin ellos el APK sale firmado con una llave temporal (no se podrá
+# instalar encima de una versión firmada con tu llave).
+
+on:
+  push:
+    branches: [ main ]
+    tags: [ 'v*' ]
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+env:
+  UPSTREAM_APK_URL: https://github.com/nevertheaxolot/BloodyRoar2mobileRecomp/releases/download/Official-launch/app-debug.apk
+  UPSTREAM_APK_SHA256: 69f4840cfad26dd9d4e99fece0a77db12cc1daa1c893cede764b3920f6152659
+  APKTOOL_URL: https://github.com/iBotPeaches/Apktool/releases/download/v2.12.1/apktool_2.12.1.jar
+  SIGNER_URL: https://github.com/patrickfav/uber-apk-signer/releases/download/v1.3.0/uber-apk-signer-1.3.0.jar
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Instalar herramientas
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq librsvg2-bin
+          mkdir -p tools
+          curl -sSL -o tools/apktool.jar "$APKTOOL_URL"
+          curl -sSL -o tools/signer.jar "$SIGNER_URL"
+
+      - name: Descargar y verificar el APK v1.0 original
+        run: |
+          curl -sSL -o original.apk "$UPSTREAM_APK_URL"
+          echo "$UPSTREAM_APK_SHA256  original.apk" | sha256sum -c -
+
+      - name: Aplicar icono y nombre
+        run: |
+          python3 icon/make_icon.py icon/svg
+          java -jar tools/apktool.jar d -s -f -o dec original.apk
+          bash patch/apply_patch.sh dec icon/svg
+          java -jar tools/apktool.jar b dec -o unsigned.apk
+
+      - name: Firmar
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+        run: |
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "$KEYSTORE_BASE64" | base64 -d > br2mobile.jks
+            java -jar tools/signer.jar -a unsigned.apk -o signed \
+              --ks br2mobile.jks --ksAlias br2mobile \
+              --ksPass "$KEYSTORE_PASSWORD" --ksKeyPass "$KEYSTORE_PASSWORD"
+            rm -f br2mobile.jks
+          else
+            echo "::warning::Sin KEYSTORE_BASE64: se firma con llave temporal"
+            java -jar tools/signer.jar -a unsigned.apk -o signed
+          fi
+          VERSION=$(grep versionName dec/apktool.yml | awk '{print $2}')
+          mv signed/*.apk "BloodyRoar2Mobile-v${VERSION}.apk"
+          sha256sum BloodyRoar2Mobile-*.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: BloodyRoar2Mobile
+          path: BloodyRoar2Mobile-*.apk
+
+      - name: Publicar Release (solo con etiqueta v*)
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" BloodyRoar2Mobile-*.apk \
+            --title "Bloody Roar 2 Mobile $GITHUB_REF_NAME" \
+            --notes "APK con icono y nombre propios, basado en la v1.0 de nevertheaxolot. No incluye el juego: necesitas tu propia imagen de Bloody Roar II (USA) y el OpenBIOS."
