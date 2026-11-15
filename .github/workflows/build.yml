@@ -3,7 +3,8 @@ name: Construir Bloody Roar 2 Mobile
 # Toma el APK v1.0 oficial de nevertheaxolot, le aplica el icono y el nombre
 # de este repo, lo firma con tu llave y lo publica.
 #   - Cada cambio en "main" deja el APK como artefacto descargable (pestaña Actions).
-#   - Si creas una etiqueta v* (ej. v1.0-mobile.2) también se publica como Release.
+#   - También se publica como Release: en main con el nombre de la versión del
+#     APK (ej. v1.0-mobile.2), o con la etiqueta v* que crees.
 #
 # Secretos necesarios (Settings > Secrets and variables > Actions):
 #   KEYSTORE_BASE64    la llave br2mobile.jks convertida a base64
@@ -96,11 +97,24 @@ jobs:
           name: BloodyRoar2Mobile
           path: BloodyRoar2Mobile-*.apk
 
-      - name: Publicar Release (solo con etiqueta v*)
-        if: startsWith(github.ref, 'refs/tags/v')
+      - name: Publicar Release
+        # Con etiqueta v* usa esa etiqueta. En main usa la versión del APK
+        # (versionName de patch/apply_patch.sh, ej. v1.0-mobile.2): la crea si
+        # no existe o le reemplaza el APK si ya existe.
+        if: startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/main'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "$GITHUB_REF_NAME" BloodyRoar2Mobile-*.apk \
-            --title "Bloody Roar 2 Mobile $GITHUB_REF_NAME" \
-            --notes "APK con icono y nombre propios, botón GUARDAR (save states) y menú de Trucos, basado en la v1.0 de nevertheaxolot. No incluye el juego: necesitas tu propia imagen de Bloody Roar II (USA) y el OpenBIOS."
+          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            TAG="$GITHUB_REF_NAME"
+          else
+            TAG="v$(grep versionName dec/apktool.yml | awk '{print $2}')"
+          fi
+          NOTES="APK con icono y nombre propios, botón GUARDAR (save states) y menú de Trucos, basado en la v1.0 de nevertheaxolot. No incluye el juego: necesitas tu propia imagen de Bloody Roar II (USA) y el OpenBIOS."
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "La Release $TAG ya existe: se reemplaza el APK"
+            gh release upload "$TAG" BloodyRoar2Mobile-*.apk --clobber
+          else
+            gh release create "$TAG" BloodyRoar2Mobile-*.apk --target "$GITHUB_SHA" \
+              --title "Bloody Roar 2 Mobile $TAG" --notes "$NOTES"
+          fi

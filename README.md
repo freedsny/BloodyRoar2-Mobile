@@ -67,8 +67,8 @@ Este repo **no incluye** el juego ni ningún archivo con derechos de autor.
 | `patch/build_extras.sh` | Compila el plugin (clang, sin NDK) y el menú (javac + d8) |
 | `.github/workflows/build.yml` | Descarga la v1.0 original (verifica su SHA-256), compila los extras, aplica el parche, firma y publica |
 
-Para sacar una versión nueva: cambia lo que quieras, sube a `main` y crea una etiqueta `v1.0-mobile.N`.
-El APK aparece en *Releases*.
+Para sacar una versión nueva: sube `versionName`/`versionCode` en `patch/apply_patch.sh` y sube a `main`.
+El APK aparece en *Releases* como `v<versión>` (si la versión no cambió, se reemplaza el APK de esa Release).
 
 ## Licencia
 
