@@ -50,12 +50,27 @@ jobs:
           curl -sSL -o original.apk "$UPSTREAM_APK_URL"
           echo "$UPSTREAM_APK_SHA256  original.apk" | sha256sum -c -
 
-      - name: Aplicar icono y nombre
+      - name: Descompilar
         run: |
           python3 icon/make_icon.py icon/svg
-          java -jar tools/apktool.jar d -s -f -o dec original.apk
-          bash patch/apply_patch.sh dec icon/svg
+          java -jar tools/apktool.jar d -f -o dec original.apk
+
+      - name: Compilar trucos (plugin nativo + menú)
+        run: |
+          ANDROID_JAR=$(ls -d "$ANDROID_HOME"/platforms/android-*/android.jar | sort -V | tail -n1)
+          D8=$(ls -d "$ANDROID_HOME"/build-tools/*/d8 | sort -V | tail -n1)
+          echo "android.jar: $ANDROID_JAR"; echo "d8: $D8"; clang --version | head -n1
+          bash patch/build_extras.sh extras dec/lib/arm64-v8a/libpsx_android.so "$ANDROID_JAR" "$D8"
+
+      - name: Aplicar parche y reconstruir
+        run: |
+          bash patch/apply_patch.sh dec icon/svg extras
           java -jar tools/apktool.jar b dec -o unsigned.apk
+          # El menú de trucos va como el siguiente classesN.dex del APK
+          N=$(( $(unzip -Z1 unsigned.apk | grep -cE '^classes[0-9]*\.dex$') + 1 ))
+          cp extras/classes.dex "extras/classes$N.dex"
+          (cd extras && zip -q ../unsigned.apk "classes$N.dex")
+          unzip -Z1 unsigned.apk | grep -E '^classes|libbr2cheats'
 
       - name: Firmar
         env:
@@ -88,4 +103,4 @@ jobs:
         run: |
           gh release create "$GITHUB_REF_NAME" BloodyRoar2Mobile-*.apk \
             --title "Bloody Roar 2 Mobile $GITHUB_REF_NAME" \
-            --notes "APK con icono y nombre propios, basado en la v1.0 de nevertheaxolot. No incluye el juego: necesitas tu propia imagen de Bloody Roar II (USA) y el OpenBIOS."
+            --notes "APK con icono y nombre propios, botón GUARDAR (save states) y menú de Trucos, basado en la v1.0 de nevertheaxolot. No incluye el juego: necesitas tu propia imagen de Bloody Roar II (USA) y el OpenBIOS."

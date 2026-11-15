@@ -1,0 +1,169 @@
+# Paquete de mods "Trucos" de Bloody Roar 2 Mobile.
+# Lo instala la app en files/mods/bundled/ y el menú "Trucos" escribe
+# files/mods/state.toml con los que estén activos. Cada [[plugin]] lo
+# implementa libbr2cheats.so (patch/cheats/br2cheats.c).
+format_version = 5
+id = "br2mobile.cheats"
+version = "1.0.0"
+name = "Bloody Roar 2 Mobile - Trucos"
+author = "Freed"
+description = "Trucos GameShark de Bloody Roar II (USA): desbloqueos, vida y bestia infinitas, tiempo infinito y más."
+resolver = "declarative"
+save_compatibility = "shared"
+
+[[target]]
+game_id = "SCUS-94424"
+
+[[feature]]
+id = "personajes"
+name = "Todos los personajes"
+description = "Desbloquea a Gado y Shen Long."
+group = "Desbloqueos"
+default_enabled = false
+
+[[plugin]]
+feature = "personajes"
+id = "br2mobile.cheats.personajes"
+
+[[feature]]
+id = "custom"
+name = "Todo el modo Custom"
+description = "Desbloquea todas las opciones Custom."
+group = "Desbloqueos"
+default_enabled = false
+
+[[plugin]]
+feature = "custom"
+id = "br2mobile.cheats.custom"
+
+[[feature]]
+id = "peliculas"
+name = "Todas las películas"
+description = "Desbloquea todos los videos de la galería."
+group = "Desbloqueos"
+default_enabled = false
+
+[[plugin]]
+feature = "peliculas"
+id = "br2mobile.cheats.peliculas"
+
+[[feature]]
+id = "imagenes"
+name = "Todas las imágenes"
+description = "Desbloquea todas las imágenes de la galería."
+group = "Desbloqueos"
+default_enabled = false
+
+[[plugin]]
+feature = "imagenes"
+id = "br2mobile.cheats.imagenes"
+
+[[feature]]
+id = "vida-j1"
+name = "Vida infinita J1"
+description = "El jugador 1 no pierde vida."
+group = "Combate"
+default_enabled = false
+
+[[plugin]]
+feature = "vida-j1"
+id = "br2mobile.cheats.vida-j1"
+
+[[feature]]
+id = "vida-j2"
+name = "Vida infinita J2"
+description = "El jugador 2 no pierde vida."
+group = "Combate"
+default_enabled = false
+
+[[plugin]]
+feature = "vida-j2"
+id = "br2mobile.cheats.vida-j2"
+
+[[feature]]
+id = "vida-ambos"
+name = "Vida infinita J1 y J2"
+description = "Ningún jugador pierde vida."
+group = "Combate"
+default_enabled = false
+
+[[plugin]]
+feature = "vida-ambos"
+id = "br2mobile.cheats.vida-ambos"
+
+[[feature]]
+id = "bestia-j1"
+name = "Bestia infinita J1"
+description = "La barra de bestia del jugador 1 no se gasta."
+group = "Combate"
+default_enabled = false
+
+[[plugin]]
+feature = "bestia-j1"
+id = "br2mobile.cheats.bestia-j1"
+
+[[feature]]
+id = "bestia-j2"
+name = "Bestia infinita J2"
+description = "La barra de bestia del jugador 2 no se gasta."
+group = "Combate"
+default_enabled = false
+
+[[plugin]]
+feature = "bestia-j2"
+id = "br2mobile.cheats.bestia-j2"
+
+[[feature]]
+id = "bestia-ambos"
+name = "Bestia infinita J1 y J2"
+description = "La barra de bestia de ambos no se gasta."
+group = "Combate"
+default_enabled = false
+
+[[plugin]]
+feature = "bestia-ambos"
+id = "br2mobile.cheats.bestia-ambos"
+
+[[feature]]
+id = "bestia-llena"
+name = "Bestia llena al empezar"
+description = "Ambos jugadores empiezan con la barra de bestia llena."
+group = "Combate"
+default_enabled = false
+
+[[plugin]]
+feature = "bestia-llena"
+id = "br2mobile.cheats.bestia-llena"
+
+[[feature]]
+id = "tiempo"
+name = "Tiempo infinito"
+description = "El reloj del round no baja."
+group = "Combate"
+default_enabled = false
+
+[[plugin]]
+feature = "tiempo"
+id = "br2mobile.cheats.tiempo"
+
+[[feature]]
+id = "una-pelea"
+name = "Una sola pelea para ganar"
+description = "El modo arcade termina tras ganar una pelea."
+group = "Otros"
+default_enabled = false
+
+[[plugin]]
+feature = "una-pelea"
+id = "br2mobile.cheats.una-pelea"
+
+[[feature]]
+id = "distancia"
+name = "Golpes a cualquier distancia"
+description = "Los golpes conectan aunque estés lejos."
+group = "Otros"
+default_enabled = false
+
+[[plugin]]
+feature = "distancia"
+id = "br2mobile.cheats.distancia"

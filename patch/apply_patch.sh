@@ -1,12 +1,16 @@
 #!/usr/bin/env bash
 # Aplica el parche de Bloody Roar 2 Mobile a un APK ya descompilado con apktool.
-#   uso: apply_patch.sh <carpeta_descompilada> <carpeta_svg_del_icono>
+#   uso: apply_patch.sh <carpeta_descompilada> <carpeta_svg_del_icono> <carpeta_extras>
 # Cambia: nombre visible, icono (adaptativo + clásico) y nombre de paquete
 # (para que se instale junto al original sin conflicto de firmas).
+# Agrega: botón táctil "GUARDAR" (save states) y menú "Trucos".
+# <carpeta_extras> es la salida de build_extras.sh (libbr2cheats.so).
+# El classes.dex del menú se mete al APK después de "apktool b".
 set -euo pipefail
 
 DEC="$1"
 SVG="$2"
+EXTRAS="$3"
 APP_NAME="Bloody Roar 2 Mobile"
 NEW_PACKAGE="io.github.freedsny.br2mobile"
 
@@ -57,6 +61,111 @@ s = open(path, encoding="utf-8").read()
 s = s.replace('package="com.br2recomp.android"', f'package="{pkg}"', 1)
 open(path, "w", encoding="utf-8").write(s)
 PY
-sed -i 's/versionName: 0.1-scaffold/versionName: 1.0-mobile.1/' "$DEC/apktool.yml"
+# 5) Botón táctil "GUARDAR": abre el menú de save states del motor (tecla F7).
+#    El APK debe estar descompilado CON código (apktool d sin -s).
+HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+MAIN_SMALI=$(find "$DEC" -path '*/com/br2recomp/android/MainActivity.smali' | head -n1)
+if [ -z "$MAIN_SMALI" ]; then
+  echo "ERROR: no encontré MainActivity.smali (¿se descompiló con -s?)" >&2
+  exit 1
+fi
+cp "$HERE/smali/SaveStateButton.smali" "$(dirname "$MAIN_SMALI")/"
+python3 - "$MAIN_SMALI" <<'PY'
+import sys
+path = sys.argv[1]
+s = open(path, encoding="utf-8").read()
+call = "    invoke-static {p0}, Lcom/br2recomp/android/SaveStateButton;->attach(Landroid/app/Activity;)V\n"
+if call in s:
+    sys.exit(0)
+start = s.index(".method private br2AddTouchOverlay()V")
+end = s.index(".end method", start)
+body = s[start:end]
+# Justo después de añadir el overlay táctil, dentro del mismo try/catch.
+anchor = "    :try_end_0\n"
+i = body.index(anchor)
+body = body[:i] + "\n" + call + "\n" + body[i:]
+open(path, "w", encoding="utf-8").write(s[:start] + body + s[end:])
+PY
 
-echo "Parche aplicado: '$APP_NAME' ($NEW_PACKAGE)"
+# 6) Trucos: plugin nativo, paquete de mods y menú.
+#    - libbr2cheats.so va antes de psx_android en getLibraries(): SDL busca
+#      SDL_main en la ÚLTIMA librería de la lista, y el plugin tiene que
+#      registrarse antes de que el motor resuelva los mods.
+#    - Br2Cheats.install() escribe files/mods antes de que arranque el motor.
+#    - El botón "Mods" del launcher (que decía "próximamente") abre el menú.
+cp "$EXTRAS/libbr2cheats.so" "$DEC/lib/arm64-v8a/"
+mkdir -p "$DEC/assets/br2mobile_cheats"
+cp "$HERE/cheats/manifest.toml" "$DEC/assets/br2mobile_cheats/manifest.toml"
+SELECT_SMALI="$(dirname "$MAIN_SMALI")/SelectGameActivity.smali"
+python3 - "$MAIN_SMALI" "$SELECT_SMALI" "$DEC/res/layout/activity_select_game.xml" <<'PY'
+import re, sys
+main_path, select_path, layout_path = sys.argv[1:4]
+
+def method(src, header):
+    start = src.index(header)
+    end = src.index(".end method", start) + len(".end method")
+    return start, end
+
+# getLibraries -> { "SDL2", "br2cheats", "psx_android" }
+s = open(main_path, encoding="utf-8").read()
+start, end = method(s, ".method protected getLibraries()[Ljava/lang/String;")
+s = s[:start] + """.method protected getLibraries()[Ljava/lang/String;
+    .locals 3
+
+    const/4 v0, 0x3
+
+    new-array v0, v0, [Ljava/lang/String;
+
+    const/4 v1, 0x0
+
+    const-string v2, "SDL2"
+
+    aput-object v2, v0, v1
+
+    const/4 v1, 0x1
+
+    const-string v2, "br2cheats"
+
+    aput-object v2, v0, v1
+
+    const/4 v1, 0x2
+
+    const-string v2, "psx_android"
+
+    aput-object v2, v0, v1
+
+    return-object v0
+.end method""" + s[end:]
+
+# onCreate: preparar trucos justo antes de br2PrepareInput()
+install = "    invoke-static {p0}, Lcom/br2recomp/android/Br2Cheats;->install(Landroid/content/Context;)V\n\n"
+anchor = "    invoke-direct {p0}, Lcom/br2recomp/android/MainActivity;->br2PrepareInput()V\n"
+if install not in s:
+    assert s.count(anchor) == 1, "br2PrepareInput() no aparece una sola vez"
+    s = s.replace(anchor, install + anchor)
+open(main_path, "w", encoding="utf-8").write(s)
+
+# Botón "Mods" del launcher -> menú de trucos
+s = open(select_path, encoding="utf-8").read()
+start, end = method(s, ".method private synthetic lambda$onCreate$4(Landroid/view/View;)V")
+assert "Mods: pr" in s[start:end], "el botón Mods ya no es el esperado"
+s = s[:start] + """.method private synthetic lambda$onCreate$4(Landroid/view/View;)V
+    .locals 0
+    .param p1, "v"    # Landroid/view/View;
+
+    invoke-static {p0}, Lcom/br2recomp/android/Br2Cheats;->openMenu(Landroid/app/Activity;)V
+
+    return-void
+.end method""" + s[end:]
+open(select_path, "w", encoding="utf-8").write(s)
+
+s = open(layout_path, encoding="utf-8").read()
+s2 = re.sub(r'(android:id="@id/button_mods"[^>]*?android:text=")Mods(")', r"\1Trucos\2", s)
+assert s2 != s, "no encontré el texto del botón Mods"
+open(layout_path, "w", encoding="utf-8").write(s2)
+PY
+
+sed -i 's/versionCode: 1$/versionCode: 2/' "$DEC/apktool.yml"
+sed -i 's/versionName: 0.1-scaffold/versionName: 1.0-mobile.2/' "$DEC/apktool.yml"
+
+echo "Parche aplicado: '$APP_NAME' ($NEW_PACKAGE) con botón GUARDAR y menú de Trucos"
