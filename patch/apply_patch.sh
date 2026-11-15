@@ -3,7 +3,7 @@
 #   uso: apply_patch.sh <carpeta_descompilada> <carpeta_svg_del_icono> <carpeta_extras>
 # Cambia: nombre visible, icono (adaptativo + clásico) y nombre de paquete
 # (para que se instale junto al original sin conflicto de firmas).
-# Agrega: botón táctil "GUARDAR" (save states) y menú "Trucos".
+# Agrega: botones táctiles "GUARDAR"/"CARGAR" (save states) y menú "Trucos".
 # <carpeta_extras> es la salida de build_extras.sh (libbr2cheats.so).
 # El classes.dex del menú se mete al APK después de "apktool b".
 set -euo pipefail
@@ -61,15 +61,15 @@ s = open(path, encoding="utf-8").read()
 s = s.replace('package="com.br2recomp.android"', f'package="{pkg}"', 1)
 open(path, "w", encoding="utf-8").write(s)
 PY
-# 5) Botón táctil "GUARDAR": abre el menú de save states del motor (tecla F7).
-#    El APK debe estar descompilado CON código (apktool d sin -s).
+# 5) Botones táctiles "GUARDAR" y "CARGAR" (guardado rápido, ranura 1).
+#    La clase SaveStateButton viene en el classes.dex de build_extras.sh;
+#    aquí solo se engancha. El APK debe descompilarse CON código (sin -s).
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 MAIN_SMALI=$(find "$DEC" -path '*/com/br2recomp/android/MainActivity.smali' | head -n1)
 if [ -z "$MAIN_SMALI" ]; then
   echo "ERROR: no encontré MainActivity.smali (¿se descompiló con -s?)" >&2
   exit 1
 fi
-cp "$HERE/smali/SaveStateButton.smali" "$(dirname "$MAIN_SMALI")/"
 python3 - "$MAIN_SMALI" <<'PY'
 import sys
 path = sys.argv[1]
@@ -165,7 +165,7 @@ assert s2 != s, "no encontré el texto del botón Mods"
 open(layout_path, "w", encoding="utf-8").write(s2)
 PY
 
-sed -i 's/versionCode: 1$/versionCode: 2/' "$DEC/apktool.yml"
-sed -i 's/versionName: 0.1-scaffold/versionName: 1.0-mobile.2/' "$DEC/apktool.yml"
+sed -i 's/versionCode: 1$/versionCode: 3/' "$DEC/apktool.yml"
+sed -i 's/versionName: 0.1-scaffold/versionName: 1.0-mobile.3/' "$DEC/apktool.yml"
 
-echo "Parche aplicado: '$APP_NAME' ($NEW_PACKAGE) con botón GUARDAR y menú de Trucos"
+echo "Parche aplicado: '$APP_NAME' ($NEW_PACKAGE) con botones GUARDAR/CARGAR y menú de Trucos"

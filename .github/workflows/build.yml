@@ -110,7 +110,7 @@ jobs:
           else
             TAG="v$(grep versionName dec/apktool.yml | awk '{print $2}')"
           fi
-          NOTES="APK con icono y nombre propios, botón GUARDAR (save states) y menú de Trucos, basado en la v1.0 de nevertheaxolot. No incluye el juego: necesitas tu propia imagen de Bloody Roar II (USA) y el OpenBIOS."
+          NOTES="APK con icono y nombre propios, botones GUARDAR y CARGAR (guardado rápido) y menú de Trucos, basado en la v1.0 de nevertheaxolot. No incluye el juego: necesitas tu propia imagen de Bloody Roar II (USA) y el OpenBIOS."
           if gh release view "$TAG" >/dev/null 2>&1; then
             echo "La Release $TAG ya existe: se reemplaza el APK"
             gh release upload "$TAG" BloodyRoar2Mobile-*.apk --clobber

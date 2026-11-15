@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Compila lo que el parche agrega con código propio:
 #   - libbr2cheats.so  (plugin de trucos, C, arm64, sin libc)
-#   - classes.dex      (menú de trucos en Java -> dex)
+#   - classes.dex      (menú de trucos y botones GUARDAR/CARGAR en Java -> dex)
 #
 #   uso: build_extras.sh <salida> <libpsx_android.so> <android.jar> <comando d8...>
 #   ej.: build_extras.sh extras dec/lib/arm64-v8a/libpsx_android.so \
@@ -23,10 +23,14 @@ clang --target=aarch64-linux-android26 -ffreestanding -fPIC -O2 -Wall -Wextra -W
   -L"$(dirname "$PSX_SO")" -lpsx_android
 
 # 2) Menú de trucos (Java -> .class -> dex)
-rm -rf "$OUT/classes" "$OUT/dex"
-mkdir -p "$OUT/classes" "$OUT/dex"
+#    java-stubs/ solo sirve para compilar (SDLActivity ya está en el APK).
+rm -rf "$OUT/classes" "$OUT/stubs" "$OUT/dex"
+mkdir -p "$OUT/classes" "$OUT/stubs" "$OUT/dex"
 javac -nowarn -Xlint:-options -source 8 -target 8 -encoding UTF-8 \
-  -bootclasspath "$ANDROID_JAR" -d "$OUT/classes" \
+  -bootclasspath "$ANDROID_JAR" -d "$OUT/stubs" \
+  $(find "$HERE/java-stubs" -name '*.java')
+javac -nowarn -Xlint:-options -source 8 -target 8 -encoding UTF-8 \
+  -bootclasspath "$ANDROID_JAR" -classpath "$OUT/stubs" -d "$OUT/classes" \
   $(find "$HERE/java" -name '*.java')
 "${D8[@]}" --release --min-api 26 --lib "$ANDROID_JAR" --output "$OUT/dex" \
   $(find "$OUT/classes" -name '*.class')

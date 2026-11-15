@@ -10,28 +10,23 @@ y le cambia la presentación:
 - **Icono propio** (zarpazos dorados sobre rojo oscuro), adaptativo para Android 8+.
 - **Nombre:** "Bloody Roar 2 Mobile".
 - **Paquete propio** (`io.github.freedsny.br2mobile`): se instala junto a la versión original sin chocar.
-- **Botón GUARDAR** (abajo al centro, con los controles táctiles): abre el menú de *save states*
-  del motor, 12 ranuras para guardar la partida exactamente donde vas.
+- **Botones GUARDAR y CARGAR** (abajo al centro, con los controles táctiles): guardan y cargan
+  la partida exactamente donde vas (guardado rápido).
 - **Menú de Trucos** (botón "Trucos" del launcher): desbloqueos, vida y bestia infinitas, tiempo infinito y más.
 
 El motor del juego (`libpsx_android.so`) queda **idéntico** a la v1.0; el parche cambia el icono,
-el nombre y el identificador, y agrega el botón GUARDAR y los trucos.
+el nombre y el identificador, y agrega los botones GUARDAR/CARGAR y los trucos.
 
 ## Guardar la partida
 
 El juego guarda en la memory card solo lo que guardaba en la PS1 (personajes desbloqueados,
 combos, opciones), y hay que guardarlo desde el menú del juego. Para seguir **donde lo dejaste**
-usa el botón **GUARDAR**:
+usa los botones **GUARDAR** y **CARGAR** (abajo al centro). Un mensaje confirma
+"Partida guardada" o "Partida cargada". Se usa una sola ranura: guardar otra vez la reemplaza.
 
-| En el menú de save states | Botón |
-|---|---|
-| Elegir ranura (1–12) | Cruceta |
-| Guardar en la ranura | ○ (círculo) |
-| Cargar la ranura | START |
-| Cerrar el menú | GUARDAR otra vez |
-
-Con control físico el mismo menú se abre con **Select + R1**.
-Las ranuras y la memory card viven dentro de la app: si la desinstalas se borran.
+El menú de *save states* del motor (tecla F7, o Select + R1 con control físico) no se dibuja en
+Android, por eso los botones lo manejan solos: abren el menú y mandan guardar o cargar.
+La partida guardada y la memory card viven dentro de la app: si la desinstalas se borran.
 
 ## Trucos
 
@@ -60,11 +55,11 @@ Este repo **no incluye** el juego ni ningún archivo con derechos de autor.
 | Carpeta | Qué hay |
 |---|---|
 | `icon/` | `make_icon.py` genera el icono en SVG; `svg/` son las capas listas |
-| `patch/apply_patch.sh` | Pone icono, nombre, paquete, botón GUARDAR y trucos en el APK descompilado |
-| `patch/smali/` | Botón GUARDAR (envía la tecla F7 al motor) |
-| `patch/java/` | Menú de Trucos del launcher (Java → `classes4.dex`) |
+| `patch/apply_patch.sh` | Pone icono, nombre, paquete, botones GUARDAR/CARGAR y trucos en el APK descompilado |
+| `patch/java/` | Botones GUARDAR/CARGAR y menú de Trucos (Java → `classes4.dex`) |
+| `patch/java-stubs/` | `SDLActivity` falso solo para compilar (no se empaqueta) |
 | `patch/cheats/` | Plugin de trucos (`br2cheats.c` → `libbr2cheats.so`) y su paquete de mods |
-| `patch/build_extras.sh` | Compila el plugin (clang, sin NDK) y el menú (javac + d8) |
+| `patch/build_extras.sh` | Compila el plugin (clang, sin NDK) y el código Java (javac + d8) |
 | `.github/workflows/build.yml` | Descarga la v1.0 original (verifica su SHA-256), compila los extras, aplica el parche, firma y publica |
 
 Para sacar una versión nueva: sube `versionName`/`versionCode` en `patch/apply_patch.sh` y sube a `main`.
