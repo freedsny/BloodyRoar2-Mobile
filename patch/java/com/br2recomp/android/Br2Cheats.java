@@ -16,7 +16,8 @@ import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 
 /**
- * Menú "Trucos" de Bloody Roar 2 Mobile.
+ * Menú "Trucos y mejoras" de Bloody Roar 2 Mobile (trucos GameShark y los
+ * mods oficiales de pantalla ancha, turbo y saltar la intro).
  *
  * - {@link #openMenu(Activity)} lo abre el botón "Trucos" del launcher y guarda
  *   lo elegido en SharedPreferences.
@@ -35,6 +36,7 @@ public final class Br2Cheats {
 
     /** Ids de feature; deben coincidir con manifest.toml y br2cheats.c. */
     static final String[] IDS = {
+        "ancho-16-9", "ancho-completo", "turbo-75", "turbo-120", "saltar-intro",
         "personajes", "custom", "peliculas", "imagenes",
         "vida-j1", "vida-j2", "vida-ambos",
         "bestia-j1", "bestia-j2", "bestia-ambos", "bestia-llena",
@@ -42,6 +44,11 @@ public final class Br2Cheats {
     };
 
     static final String[] LABELS = {
+        "Pantalla ancha 16:9",
+        "Pantalla ancha completa (se ajusta al celular)",
+        "Turbo x1.25 (más rápido)",
+        "Turbo x2 (el doble de rápido)",
+        "Saltar videos de la intro",
         "Todos los personajes (Gado y Shen Long)",
         "Todo el modo Custom",
         "Todas las películas",
@@ -60,6 +67,7 @@ public final class Br2Cheats {
 
     /** Trucos del mismo grupo (distinto de 0) se excluyen entre sí. */
     private static final int[] GROUP = {
+        3, 3, 4, 4, 0,
         0, 0, 0, 0,
         1, 1, 1,
         2, 2, 2, 0,
@@ -91,7 +99,7 @@ public final class Br2Cheats {
         final boolean[] on = load(activity);
         AlertDialog.Builder b = new AlertDialog.Builder(
                 activity, android.R.style.Theme_DeviceDefault_Dialog_Alert);
-        b.setTitle("Trucos");
+        b.setTitle("Trucos y mejoras");
         b.setMultiChoiceItems(LABELS, on, new DialogInterface.OnMultiChoiceClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which, boolean checked) {

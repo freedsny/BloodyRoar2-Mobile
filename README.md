@@ -8,7 +8,8 @@ Parte de la v1.0 de [nevertheaxolot/BloodyRoar2mobileRecomp](https://github.com/
 y le agrega lo que le faltaba para jugarlo cómodo en el celular:
 
 - **Guardar y cargar la partida** donde vas, con dos botones en pantalla.
-- **Menú de Trucos**: desbloquear todo, vida infinita, bestia infinita, tiempo infinito y más.
+- **Menú de Trucos y mejoras**: pantalla ancha, modo turbo, saltar la intro, desbloquear todo,
+  vida infinita, bestia infinita, tiempo infinito y más.
 - **Icono y nombre propios**, con un paquete aparte que se instala junto al original sin chocar.
 
 **[⬇️ Descargar la última versión (Releases)](https://github.com/freedsny/BloodyRoar2-Mobile/releases/latest)**
@@ -34,6 +35,17 @@ y le agrega lo que le faltaba para jugarlo cómodo en el celular:
 ---
 
 ## Novedades
+
+### v1.0-mobile.4 — Pantalla ancha, Turbo y Saltar intro
+- Se agregan los **3 mods oficiales** del proyecto de PC
+  ([novapowers0/BloodyRoar2Recomp](https://github.com/novapowers0/BloodyRoar2Recomp)) que nunca se
+  incluyeron en el APK de Android:
+  - **Pantalla ancha** 16:9, o completa (se ajusta a la pantalla del celular, hasta 21:9).
+  - **Turbo** x1.25 o x2: todo el juego corre más rápido, como las ediciones Turbo de arcade.
+  - **Saltar videos de la intro**: llegas más rápido a la pantalla de título.
+- El menú ahora se llama **Trucos y mejoras**, con las mejoras arriba.
+- Revisado: el repositorio original (nevertheaxolot) no tiene cambios nuevos; su APK
+  "Official-launch" es idéntico al que usa esta versión.
 
 ### v1.0-mobile.3 — Guardar y cargar que sí funcionan
 - Dos botones abajo en el centro: **GUARDAR** y **CARGAR**.
@@ -81,7 +93,7 @@ Si vienes de la v1.0-mobile.1 hay que desinstalarla una vez, porque tenía otra 
 1. Abre **Bloody Roar 2 Mobile**.
 2. **Select game (iso/bin)**: elige tu archivo `.bin` del juego (la primera vez lo copia y tarda un poco).
 3. **Select OpenBIOS**: elige tu `openbios.bin`.
-4. (Opcional) **Trucos**: marca los que quieras.
+4. (Opcional) **Trucos**: marca los trucos y mejoras que quieras.
 5. **Play the game**.
 
 **Controles:**
@@ -114,8 +126,23 @@ se cierra. Ese abrir y cerrar es el parpadeo, y es normal.
 
 ## Trucos
 
-Se eligen en el botón **Trucos** de la pantalla de inicio, con **Guardar**. Se aplican **al iniciar
-el juego**: si cambias algo, sal y vuelve a entrar con *Play the game*.
+Se eligen en el botón **Trucos** de la pantalla de inicio (el menú se llama *Trucos y mejoras*),
+con **Guardar**. Se aplican **al iniciar el juego**: si cambias algo, sal y vuelve a entrar con
+*Play the game*.
+
+### Mejoras
+
+| Mejora | Qué hace |
+|---|---|
+| **Pantalla ancha 16:9** | En las peleas se ve más escenario a los lados. Los menús y videos siguen en 4:3. |
+| **Pantalla ancha completa** | Igual, pero se ajusta a toda la pantalla del celular (de 4:3 hasta 21:9). |
+| **Turbo x1.25** / **Turbo x2** | El juego corre a 75 o 120 cuadros por segundo: todo va más rápido, de forma pareja. |
+| **Saltar videos de la intro** | Salta los videos del inicio (el motor presiona START por ti). |
+
+Son los mods oficiales de NovaPowers para Bloody Roar II. Las dos pantallas anchas se excluyen entre
+sí, igual que los dos turbos. Con pantalla ancha, los controles táctiles tapan un poco más del juego.
+
+### Trucos del juego
 
 | Grupo | Truco | Tipo |
 |---|---|---|
@@ -180,8 +207,8 @@ APK v1.0 original ──► apktool d (con código)
 | `patch/build_extras.sh` | Compila el plugin (clang, sin NDK) y el código Java (javac + d8) |
 | `patch/java/` | `SaveStateButton` (botones GUARDAR/CARGAR) y `Br2Cheats` (menú de trucos) |
 | `patch/java-stubs/` | `SDLActivity` falso, solo para compilar (no se empaqueta) |
-| `patch/cheats/br2cheats.c` | Plugin nativo de trucos → `libbr2cheats.so` |
-| `patch/cheats/manifest.toml` | Paquete de mods `br2mobile.cheats` con un *feature* por truco |
+| `patch/cheats/br2cheats.c` | Plugin nativo de trucos y mejoras → `libbr2cheats.so` |
+| `patch/cheats/manifest.toml` | Paquete de mods `br2mobile.cheats` con un *feature* por truco o mejora |
 | `.github/workflows/build.yml` | Compila, parchea, firma y publica la Release |
 
 ### Botones GUARDAR / CARGAR
@@ -197,15 +224,22 @@ states* del motor no se dibuja en Android, los botones mandan teclas al motor a 
 ### Trucos
 
 El motor (psxrecomp) tiene un sistema de mods que lee `files/mods/` al arrancar, también en
-Android, y llama a los *plugins* activos en cada VBlank del juego, en su propio hilo de emulación.
+Android. Hay dos clases de *plugins*: los **de activación** (las mejoras), que el motor llama una
+vez antes de crear la pantalla, y los **por cuadro** (los trucos), que llama en cada VBlank del juego,
+en su propio hilo de emulación. Todos viven en `libbr2cheats.so`.
 
 1. `Br2Cheats.install()` corre en `MainActivity.onCreate`, antes de que arranque el motor. Copia
    `manifest.toml` a `files/mods/bundled/br2mobile.cheats/1.0.0/` y escribe `files/mods/state.toml`
    con los trucos marcados. Si algo falla, borra `state.toml` para que el juego arranque sin trucos.
 2. `libbr2cheats.so` se carga junto al motor: `getLibraries()` queda en
    `SDL2, br2cheats, psx_android`, porque SDL busca `SDL_main` en la **última** librería. Al cargarse,
-   registra un plugin por truco con `psx_mod_register_vblank_plugin()`.
-3. En cada VBlank, cada truco activo aplica sus códigos GameShark (tipo `80`, 16 bits):
+   registra cada mejora con `psx_mod_register_activation_plugin()` y cada truco con
+   `psx_mod_register_vblank_plugin()`.
+3. Las mejoras llaman funciones del motor que ya venían en el APK: `psx_mod_set_fixed_display_aspect()`
+   y `psx_mod_set_adaptive_display_aspect()` (pantalla ancha), `psx_mod_set_native_vblank_rate()`
+   (turbo) y `psx_mod_set_auto_skip_fmv()` (saltar intro). Es lo mismo que hacen los plugins de
+   NovaPowers del proyecto de PC.
+4. En cada VBlank, cada truco activo aplica sus códigos GameShark (tipo `80`, 16 bits):
    - **Datos** (tabla de desbloqueos `0x801C0Fxx`): se reescriben en cada VBlank, como un GameShark,
      porque el juego limpia la tabla al entrar a los menús.
    - **Código** (dentro del ejecutable, `0x8011E800–0x801BF000`): este motor recompila el juego a
@@ -238,5 +272,7 @@ Para compilar en tu propia máquina hace falta Java 21, `clang` + `lld`, `rsvg-c
 - Port recompilado: [novapowers0/BloodyRoar2Recomp](https://github.com/novapowers0/BloodyRoar2Recomp) y
   [nevertheaxolot/BloodyRoar2mobileRecomp](https://github.com/nevertheaxolot/BloodyRoar2mobileRecomp),
   sobre el motor psxrecomp. Licencia MIT (ver `LICENSE-upstream`).
+- Mods de pantalla ancha, turbo y saltar intro: NovaPowers
+  ([novapowers0/BloodyRoar2Recomp](https://github.com/novapowers0/BloodyRoar2Recomp)), adaptados a Android.
 - Códigos de trucos: [libretro-database](https://github.com/libretro/libretro-database).
 - Icono, botones, menú de trucos y scripts de este repo: Freed.

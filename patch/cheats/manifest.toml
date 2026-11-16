@@ -2,12 +2,14 @@
 # Lo instala la app en files/mods/bundled/ y el menú "Trucos" escribe
 # files/mods/state.toml con los que estén activos. Cada [[plugin]] lo
 # implementa libbr2cheats.so (patch/cheats/br2cheats.c).
+# Las "Mejoras" vienen de los mods oficiales de NovaPowers (widescreen,
+# turbo, intro skip) del proyecto de PC.
 format_version = 5
 id = "br2mobile.cheats"
 version = "1.0.0"
 name = "Bloody Roar 2 Mobile - Trucos"
 author = "Freed"
-description = "Trucos GameShark de Bloody Roar II (USA): desbloqueos, vida y bestia infinitas, tiempo infinito y más."
+description = "Trucos GameShark de Bloody Roar II (USA) y mejoras: pantalla ancha, turbo y saltar la intro."
 resolver = "declarative"
 save_compatibility = "shared"
 
@@ -167,3 +169,58 @@ default_enabled = false
 [[plugin]]
 feature = "distancia"
 id = "br2mobile.cheats.distancia"
+
+[[feature]]
+id = "ancho-16-9"
+name = "Pantalla ancha 16:9"
+description = "Las peleas en 3D muestran más escenario a los lados (16:9)."
+group = "Mejoras"
+default_enabled = false
+
+[[plugin]]
+feature = "ancho-16-9"
+id = "br2mobile.cheats.ancho-16-9"
+
+[[feature]]
+id = "ancho-completo"
+name = "Pantalla ancha completa"
+description = "Como 16:9, pero se ajusta a toda la pantalla del celular (hasta 21:9)."
+group = "Mejoras"
+default_enabled = false
+
+[[plugin]]
+feature = "ancho-completo"
+id = "br2mobile.cheats.ancho-completo"
+
+[[feature]]
+id = "turbo-75"
+name = "Turbo x1.25 (75 Hz)"
+description = "Todo el juego corre un 25% más rápido."
+group = "Mejoras"
+default_enabled = false
+
+[[plugin]]
+feature = "turbo-75"
+id = "br2mobile.cheats.turbo-75"
+
+[[feature]]
+id = "turbo-120"
+name = "Turbo x2 (120 Hz)"
+description = "Todo el juego corre al doble de velocidad."
+group = "Mejoras"
+default_enabled = false
+
+[[plugin]]
+feature = "turbo-120"
+id = "br2mobile.cheats.turbo-120"
+
+[[feature]]
+id = "saltar-intro"
+name = "Saltar videos de la intro"
+description = "Salta los videos del inicio para llegar más rápido al título."
+group = "Mejoras"
+default_enabled = false
+
+[[plugin]]
+feature = "saltar-intro"
+id = "br2mobile.cheats.saltar-intro"

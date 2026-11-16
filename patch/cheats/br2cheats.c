@@ -105,9 +105,46 @@ CHEAT(tiempo,     { 0x80151356u, 0x2400 })
 CHEAT(una_pelea,  { 0x801529ECu, 0x0007 }, { 0x801529EEu, 0x2402 })
 CHEAT(distancia,  { 0x80145BCEu, 0x1000 })
 
+/* --- Mejoras (mods oficiales de NovaPowers para Bloody Roar II) ----------
+ * Plugins de activación: el motor los llama una sola vez, antes de crear la
+ * ventana y el renderizador. Copian lo que hacen br2_widescreen_plugin.c,
+ * br2_turbo_plugin.c y br2_enhancement_plugin.c del proyecto de PC
+ * (novapowers0/BloodyRoar2Recomp), que no venían compilados en el APK. */
+extern int psx_mod_register_activation_plugin(const char *id, void (*callback)(void));
+extern int psx_mod_set_fixed_display_aspect(u32 numerator, u32 denominator);
+extern int psx_mod_set_adaptive_display_aspect(u32 max_numerator, u32 max_denominator);
+extern int psx_mod_set_native_vblank_rate(u32 frames_per_second);
+extern int psx_mod_set_auto_skip_fmv(int enabled);
+
+/* Pantalla ancha: el motor "aplasta" la geometría 3D (GTE X-squash) y estira
+ * la imagen, así que en las peleas se ve más mundo a los lados. Los menús y
+ * videos 2D se quedan en 4:3. Los cortes de pantalla del juego ya vienen
+ * ajustados en game_us.toml [widescreen]. */
+static void act_ancho_16_9(void) {
+    (void)psx_mod_set_fixed_display_aspect(16u, 9u);
+}
+static void act_ancho_completo(void) {
+    /* Sigue el tamaño real de la pantalla, de 4:3 hasta 21:9. */
+    (void)psx_mod_set_fixed_display_aspect(16u, 9u);
+    (void)psx_mod_set_adaptive_display_aspect(21u, 9u);
+}
+
+/* Turbo: el juego corre a más cuadros por segundo (todo va más rápido). */
+static void act_turbo_75(void)  { (void)psx_mod_set_native_vblank_rate(75u); }
+static void act_turbo_120(void) { (void)psx_mod_set_native_vblank_rate(120u); }
+
+/* Saltar los videos de la intro (el motor presiona START por ti). */
+static void act_saltar_intro(void) { (void)psx_mod_set_auto_skip_fmv(1); }
+
 /* Los ids deben coincidir con los [[plugin]] de manifest.toml. */
 __attribute__((constructor))
 static void br2cheats_register(void) {
+    psx_mod_register_activation_plugin("br2mobile.cheats.ancho-16-9",     act_ancho_16_9);
+    psx_mod_register_activation_plugin("br2mobile.cheats.ancho-completo", act_ancho_completo);
+    psx_mod_register_activation_plugin("br2mobile.cheats.turbo-75",       act_turbo_75);
+    psx_mod_register_activation_plugin("br2mobile.cheats.turbo-120",      act_turbo_120);
+    psx_mod_register_activation_plugin("br2mobile.cheats.saltar-intro",   act_saltar_intro);
+
     psx_mod_register_vblank_plugin("br2mobile.cheats.personajes",   cb_personajes);
     psx_mod_register_vblank_plugin("br2mobile.cheats.custom",       cb_custom);
     psx_mod_register_vblank_plugin("br2mobile.cheats.peliculas",    cb_peliculas);
