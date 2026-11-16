@@ -8,11 +8,7 @@ import android.os.Looper;
 import android.os.SystemClock;
 import android.util.Log;
 import android.util.TypedValue;
-import android.view.Gravity;
 import android.view.KeyEvent;
-import android.view.View;
-import android.widget.FrameLayout;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -21,7 +17,8 @@ import org.libsdl.app.SDLActivity;
 import java.io.File;
 
 /**
- * Botones táctiles "GUARDAR" y "CARGAR" (guardado rápido, ranura 1).
+ * Guardado rápido (ranura 1) para los botones "GUARDAR" y "CARGAR" que pone
+ * {@link Br2GameUi}.
  *
  * El motor solo ofrece un menú de save states (tecla F7) que en Android no se
  * dibuja: la pantalla queda negra. Así que estos botones lo manejan "a
@@ -48,36 +45,7 @@ public final class SaveStateButton {
 
     private SaveStateButton() {}
 
-    /** Llamado por MainActivity.br2AddTouchOverlay() después del control táctil. */
-    public static void attach(final Activity activity) {
-        float d = activity.getResources().getDisplayMetrics().density;
-
-        LinearLayout row = new LinearLayout(activity);
-        row.setOrientation(LinearLayout.HORIZONTAL);
-
-        TextView save = pill(activity, "GUARDAR", d);
-        TextView load = pill(activity, "CARGAR", d);
-        LinearLayout.LayoutParams gap = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        gap.leftMargin = (int) (12 * d);
-        row.addView(save);
-        row.addView(load, gap);
-
-        save.setOnClickListener(new View.OnClickListener() {
-            @Override public void onClick(View v) { quickSave(activity); }
-        });
-        load.setOnClickListener(new View.OnClickListener() {
-            @Override public void onClick(View v) { quickLoad(activity); }
-        });
-
-        FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(
-                FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT,
-                Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL);
-        lp.bottomMargin = (int) (10 * d);
-        activity.addContentView(row, lp);
-    }
-
-    private static TextView pill(Activity a, String text, float d) {
+    static TextView pill(Activity a, String text, float d) {
         TextView t = new TextView(a);
         t.setText(text);
         t.setTextColor(GOLD);
@@ -94,7 +62,7 @@ public final class SaveStateButton {
         return t;
     }
 
-    private static void press(int keycode) {
+    static void press(int keycode) {
         SDLActivity.onNativeKeyDown(keycode);
         SDLActivity.onNativeKeyUp(keycode);
     }
@@ -104,6 +72,11 @@ public final class SaveStateButton {
     }
 
     static void quickSave(final Activity a) {
+        quickSave(a, null);
+    }
+
+    /** @param onSaved se ejecuta (en el hilo principal) si el guardado se confirmó. */
+    static void quickSave(final Activity a, final Runnable onSaved) {
         if (busy) return;
         busy = true;
         final File before = findSlot1(a);
@@ -123,6 +96,7 @@ public final class SaveStateButton {
                         if (changed) {
                             busy = false;
                             toast(a, "Partida guardada");
+                            if (onSaved != null) onSaved.run();
                         } else if (SystemClock.uptimeMillis() - start < SAVE_TIMEOUT_MS) {
                             h.postDelayed(this, POLL_MS);
                         } else {

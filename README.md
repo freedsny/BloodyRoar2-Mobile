@@ -7,7 +7,10 @@ Parte de la v1.0 de [nevertheaxolot/BloodyRoar2mobileRecomp](https://github.com/
 (que a su vez viene de [novapowers0/BloodyRoar2Recomp](https://github.com/novapowers0/BloodyRoar2Recomp))
 y le agrega lo que le faltaba para jugarlo cómodo en el celular:
 
+- **Controles táctiles estilo PlayStation**: cruceta en cruz, △ ○ ✕ □ con sus colores, L1/R1/L2/R2.
 - **Guardar y cargar la partida** donde vas, con dos botones en pantalla.
+- **Botón MENÚ en el juego**: pausa, trucos, mostrar u ocultar controles, reiniciar o volver al inicio.
+- **Listo para mando** (GameSir, Bluetooth o USB): oculta los controles táctiles solo.
 - **Menú de Trucos y mejoras**: pantalla ancha, modo turbo, saltar la intro, desbloquear todo,
   vida infinita, bestia infinita, tiempo infinito y más.
 - **Icono y nombre propios**, con un paquete aparte que se instala junto al original sin chocar.
@@ -25,6 +28,7 @@ y le agrega lo que le faltaba para jugarlo cómodo en el celular:
 - [Qué necesitas](#qué-necesitas)
 - [Instalar y actualizar](#instalar-y-actualizar)
 - [Cómo jugar](#cómo-jugar)
+- [Controles](#controles)
 - [Guardar la partida](#guardar-la-partida)
 - [Trucos](#trucos)
 - [Problemas y soluciones](#problemas-y-soluciones)
@@ -35,6 +39,16 @@ y le agrega lo que le faltaba para jugarlo cómodo en el celular:
 ---
 
 ## Novedades
+
+### v1.0-mobile.5 — Controles estilo PlayStation y botón MENÚ
+- **Controles táctiles nuevos**, con aspecto de control de PlayStation (ver [Controles](#controles)).
+  Se siguen moviendo y cambiando de tamaño en *Controls Customize*.
+- **Botón MENÚ** dentro del juego, al lado de GUARDAR y CARGAR: pausa el juego y deja abrir
+  *Trucos y mejoras*, mostrar u ocultar los controles táctiles, reiniciar o volver al inicio.
+- **Guardar y reiniciar**: al cambiar trucos o mejoras dentro del juego, guarda tu partida, reinicia
+  y te devuelve justo a donde ibas, ya con los cambios.
+- **Mandos**: si conectas o desconectas un mando durante el juego, ofrece reiniciar para usarlo.
+  GUARDAR, CARGAR y MENÚ ahora también salen cuando juegas con mando.
 
 ### v1.0-mobile.4 — Pantalla ancha, Turbo y Saltar intro
 - Se agregan los **3 mods oficiales** del proyecto de PC
@@ -96,11 +110,36 @@ Si vienes de la v1.0-mobile.1 hay que desinstalarla una vez, porque tenía otra 
 4. (Opcional) **Trucos**: marca los trucos y mejoras que quieras.
 5. **Play the game**.
 
-**Controles:**
-- **Táctiles**: cruceta a la izquierda, botones △ ○ ✕ □ a la derecha, L/R/L2/R2 arriba, Select y Start abajo.
-  Se pueden mover y cambiar de tamaño en *Controls Customize*, y se pueden apagar en el inicio.
-- **Control físico** (Bluetooth o USB): si hay uno conectado, se usa ese y se ocultan los táctiles
-  (y con ellos los botones GUARDAR/CARGAR).
+## Controles
+
+<img src="docs/controles.png" width="720" alt="Controles táctiles estilo PlayStation">
+
+- **Táctiles**: cruceta a la izquierda, △ ○ ✕ □ a la derecha, L1/L2/R1/R2 arriba, SELECT y START abajo.
+  Se pueden mover y cambiar de tamaño en *Controls Customize*, y la transparencia se ajusta ahí mismo.
+- **Abajo al centro**: **GUARDAR**, **CARGAR** y **MENÚ** (salen siempre, también con mando).
+
+### Botón MENÚ
+
+Pausa el juego (la pantalla queda negra detrás del menú) y ofrece:
+
+| Opción | Qué hace |
+|---|---|
+| **Trucos y mejoras** | El mismo menú del inicio. Si cambias algo, ofrece *Guardar y reiniciar* para aplicarlo. |
+| **Ocultar / Mostrar controles táctiles** | Esconde o muestra los botones de la pantalla (se recuerda para la próxima vez). |
+| **Reiniciar el juego** | Vuelve a arrancar el juego, guardando antes si quieres. |
+| **Volver al inicio** | Cierra el juego y vuelve a la pantalla de inicio de la app. |
+| **Continuar** | Quita la pausa. |
+
+*Guardar y reiniciar* guarda en el espacio rápido (el mismo de GUARDAR), reinicia y lo carga solo al
+arrancar, así sigues justo donde ibas.
+
+### Jugar con mando (GameSir, Bluetooth o USB)
+
+- **Conecta el mando antes de tocar *Play the game***: el juego lo detecta, lo usa para el jugador 1
+  y oculta los controles táctiles.
+- El motor elige mando o pantalla **solo al arrancar**. Si conectas o desconectas el mando durante el
+  juego, sale un aviso para reiniciar (con *Guardar y reiniciar* no pierdes nada).
+- Con mando siguen visibles GUARDAR, CARGAR y MENÚ.
 
 ## Guardar la partida
 
@@ -175,8 +214,9 @@ Los códigos son los GameShark de Bloody Roar II (USA) de la
 | Con trucos activos el juego no arranca | Entra a **Trucos** → **Quitar todos** y vuelve a jugar. |
 | Un truco no hace efecto | Recuerda que se aplican al iniciar: sal y vuelve a entrar. Si sigue igual, repórtalo. |
 | GUARDAR dice *"No se pudo confirmar el guardado"* | El motor no logró escribir la partida; repórtalo. |
-| La pantalla quedó negra y no vuelve | Se abrió el menú de guardado del motor (por ejemplo, con Select + R1 en un control físico). Ciérralo con Select + R1 otra vez. |
-| Con control físico no salen GUARDAR/CARGAR | Los botones van con los controles táctiles. Desconecta el control para guardar o cargar. |
+| La pantalla quedó negra y no vuelve | Se abrió el menú de guardado del motor (por ejemplo, con Select + R1 en un mando). Ciérralo con Select + R1 otra vez. |
+| Oculté los controles y no los encuentro | MENÚ → Mostrar controles táctiles. |
+| Conecté el mando y no responde | Lo conectaste con el juego abierto: acepta el aviso de reiniciar, o usa MENÚ → Reiniciar el juego. |
 | Android no deja instalar encima | Pasa si vienes de la v1.0-mobile.1 (otra llave): desinstálala una vez. |
 | "Al salir pierdo mi progreso" | Al cerrar la app el juego arranca desde el principio, como una consola. Usa **GUARDAR** antes de salir y **CARGAR** al volver. |
 
@@ -205,15 +245,28 @@ APK v1.0 original ──► apktool d (con código)
 | `icon/` | `make_icon.py` genera el icono en SVG; `svg/` son las capas listas |
 | `patch/apply_patch.sh` | Pone icono, nombre y paquete, y engancha los botones y los trucos en el APK descompilado |
 | `patch/build_extras.sh` | Compila el plugin (clang, sin NDK) y el código Java (javac + d8) |
-| `patch/java/` | `SaveStateButton` (botones GUARDAR/CARGAR) y `Br2Cheats` (menú de trucos) |
+| `patch/java/` | `TouchControlsView` (controles estilo PlayStation), `Br2GameUi` (GUARDAR / CARGAR / MENÚ, mandos, reinicio), `SaveStateButton` (guardado rápido) y `Br2Cheats` (menú de trucos) |
 | `patch/java-stubs/` | `SDLActivity` falso, solo para compilar (no se empaqueta) |
 | `patch/cheats/br2cheats.c` | Plugin nativo de trucos y mejoras → `libbr2cheats.so` |
 | `patch/cheats/manifest.toml` | Paquete de mods `br2mobile.cheats` con un *feature* por truco o mejora |
 | `.github/workflows/build.yml` | Compila, parchea, firma y publica la Release |
 
+### Controles y botón MENÚ
+
+- `apply_patch.sh` cambia `MainActivity.br2AddTouchOverlay()` por una llamada a `Br2GameUi.attach()`
+  y borra el `TouchControlsView` original. El nuevo (Java) tiene la misma API y guarda la posición en
+  las mismas preferencias (`tcl_N_x/y/s`), así que el editor de controles sigue funcionando igual.
+- **Pausa**: MENÚ abre el menú de *save states* del motor (F7), que en Android no se dibuja; al cerrar
+  el menú se vuelve a mandar F7.
+- **Reiniciar**: el motor no se puede reiniciar dentro del mismo proceso, así que se pide de nuevo la
+  pantalla del juego (con el mismo juego, BIOS y ajustes) y se cierra el proceso; Android la abre en uno
+  nuevo. *Guardar y reiniciar* agrega `PSX_LOAD_SLOT=0` para que el motor cargue el guardado al arrancar.
+- **Mandos**: el motor fija el jugador 1 (mando o teclado) al arrancar, según `BR2_P1_DEVICE`.
+  `Br2GameUi` escucha los mandos con `InputManager` y ofrece reiniciar si cambian.
+
 ### Botones GUARDAR / CARGAR
 
-`SaveStateButton` agrega los dos botones encima de los controles táctiles. Como el menú de *save
+`SaveStateButton` hace el guardado rápido de los botones GUARDAR y CARGAR. Como el menú de *save
 states* del motor no se dibuja en Android, los botones mandan teclas al motor a través de SDL:
 
 - **GUARDAR**: F7 (abre el menú) → 300 ms → **S** (guarda el espacio 1 y cierra).
@@ -275,4 +328,4 @@ Para compilar en tu propia máquina hace falta Java 21, `clang` + `lld`, `rsvg-c
 - Mods de pantalla ancha, turbo y saltar intro: NovaPowers
   ([novapowers0/BloodyRoar2Recomp](https://github.com/novapowers0/BloodyRoar2Recomp)), adaptados a Android.
 - Códigos de trucos: [libretro-database](https://github.com/libretro/libretro-database).
-- Icono, botones, menú de trucos y scripts de este repo: Freed.
+- Icono, controles, botones, menús y scripts de este repo: Freed.

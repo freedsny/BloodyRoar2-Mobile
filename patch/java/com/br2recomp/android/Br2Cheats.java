@@ -96,7 +96,20 @@ public final class Br2Cheats {
 
     /** Abre el menú de trucos (desde el launcher). */
     public static void openMenu(final Activity activity) {
+        openMenu(activity, null, null);
+    }
+
+    /**
+     * Abre el menú de trucos.
+     * @param onSaved  si no es null, se llama después de "Guardar" o "Quitar todos"
+     *                 cuando algo cambió (en el juego: para ofrecer reiniciar).
+     * @param onClosed si no es null, se llama cuando el menú se cierra sin cambios.
+     */
+    public static void openMenu(final Activity activity, final Runnable onSaved,
+                                final Runnable onClosed) {
         final boolean[] on = load(activity);
+        final boolean[] before = on.clone();
+        final boolean[] handled = {false};
         AlertDialog.Builder b = new AlertDialog.Builder(
                 activity, android.R.style.Theme_DeviceDefault_Dialog_Alert);
         b.setTitle("Trucos y mejoras");
@@ -118,9 +131,15 @@ public final class Br2Cheats {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 int n = save(activity, on);
+                boolean changed = !java.util.Arrays.equals(before, on);
+                if (onSaved != null && changed) {
+                    handled[0] = true;
+                    onSaved.run();
+                    return;
+                }
                 Toast.makeText(activity,
                         n == 0 ? "Trucos desactivados"
-                               : n + (n == 1 ? " truco activo" : " trucos activos")
+                               : n + (n == 1 ? " opción activa" : " opciones activas")
                                  + ". Se aplican al iniciar el juego.",
                         Toast.LENGTH_LONG).show();
             }
@@ -128,12 +147,25 @@ public final class Br2Cheats {
         b.setNeutralButton("Quitar todos", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                save(activity, new boolean[IDS.length]);
+                boolean[] none = new boolean[IDS.length];
+                save(activity, none);
+                if (onSaved != null && !java.util.Arrays.equals(before, none)) {
+                    handled[0] = true;
+                    onSaved.run();
+                    return;
+                }
                 Toast.makeText(activity, "Trucos desactivados", Toast.LENGTH_SHORT).show();
             }
         });
         b.setNegativeButton("Cancelar", null);
-        b.show();
+        AlertDialog d = b.create();
+        d.setOnDismissListener(new DialogInterface.OnDismissListener() {
+            @Override
+            public void onDismiss(DialogInterface dialog) {
+                if (!handled[0] && onClosed != null) onClosed.run();
+            }
+        });
+        d.show();
     }
 
     /**

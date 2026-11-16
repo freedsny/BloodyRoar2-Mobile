@@ -3,7 +3,8 @@
 #   uso: apply_patch.sh <carpeta_descompilada> <carpeta_svg_del_icono> <carpeta_extras>
 # Cambia: nombre visible, icono (adaptativo + clásico) y nombre de paquete
 # (para que se instale junto al original sin conflicto de firmas).
-# Agrega: botones táctiles "GUARDAR"/"CARGAR" (save states) y menú "Trucos".
+# Agrega: controles estilo PlayStation, botones GUARDAR / CARGAR / MENÚ y
+# menú "Trucos y mejoras".
 # <carpeta_extras> es la salida de build_extras.sh (libbr2cheats.so).
 # El classes.dex del menú se mete al APK después de "apktool b".
 set -euo pipefail
@@ -61,31 +62,44 @@ s = open(path, encoding="utf-8").read()
 s = s.replace('package="com.br2recomp.android"', f'package="{pkg}"', 1)
 open(path, "w", encoding="utf-8").write(s)
 PY
-# 5) Botones táctiles "GUARDAR" y "CARGAR" (guardado rápido, ranura 1).
-#    La clase SaveStateButton viene en el classes.dex de build_extras.sh;
-#    aquí solo se engancha. El APK debe descompilarse CON código (sin -s).
+# 5) Interfaz del juego (Br2GameUi, en el classes.dex de build_extras.sh):
+#    controles táctiles estilo PlayStation + botones GUARDAR / CARGAR / MENÚ.
+#    - br2AddTouchOverlay() pasa a llamar a Br2GameUi.attach().
+#    - Se borra el TouchControlsView original: el nuevo (Java) lo reemplaza con
+#      la misma API, así el editor de controles sigue funcionando.
+#    El APK debe descompilarse CON código (sin -s).
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 MAIN_SMALI=$(find "$DEC" -path '*/com/br2recomp/android/MainActivity.smali' | head -n1)
 if [ -z "$MAIN_SMALI" ]; then
   echo "ERROR: no encontré MainActivity.smali (¿se descompiló con -s?)" >&2
   exit 1
 fi
-python3 - "$MAIN_SMALI" <<'PY'
+APP_SMALI_DIR="$(dirname "$MAIN_SMALI")"
+rm -f "$APP_SMALI_DIR/TouchControlsView.smali" "$APP_SMALI_DIR/TouchControlsView\$Listener.smali"
+if ls "$APP_SMALI_DIR"/TouchControlsView*.smali >/dev/null 2>&1; then
+  echo "ERROR: quedó un TouchControlsView viejo en $APP_SMALI_DIR" >&2
+  exit 1
+fi
+python3 - "$MAIN_SMALI" <<'PY2'
 import sys
 path = sys.argv[1]
 s = open(path, encoding="utf-8").read()
-call = "    invoke-static {p0}, Lcom/br2recomp/android/SaveStateButton;->attach(Landroid/app/Activity;)V\n"
-if call in s:
-    sys.exit(0)
-start = s.index(".method private br2AddTouchOverlay()V")
-end = s.index(".end method", start)
-body = s[start:end]
-# Justo después de añadir el overlay táctil, dentro del mismo try/catch.
-anchor = "    :try_end_0\n"
-i = body.index(anchor)
-body = body[:i] + "\n" + call + "\n" + body[i:]
-open(path, "w", encoding="utf-8").write(s[:start] + body + s[end:])
-PY
+header = ".method private br2AddTouchOverlay()V"
+start = s.index(header)
+end = s.index(".end method", start) + len(".end method")
+s = s[:start] + """.method private br2AddTouchOverlay()V
+    .locals 2
+
+    iget-boolean v0, p0, Lcom/br2recomp/android/MainActivity;->br2UseOverlay:Z
+
+    iget v1, p0, Lcom/br2recomp/android/MainActivity;->br2TouchAlpha:I
+
+    invoke-static {p0, v0, v1}, Lcom/br2recomp/android/Br2GameUi;->attach(Landroid/app/Activity;ZI)V
+
+    return-void
+.end method""" + s[end:]
+open(path, "w", encoding="utf-8").write(s)
+PY2
 
 # 6) Trucos: plugin nativo, paquete de mods y menú.
 #    - libbr2cheats.so va antes de psx_android en getLibraries(): SDL busca
@@ -165,7 +179,7 @@ assert s2 != s, "no encontré el texto del botón Mods"
 open(layout_path, "w", encoding="utf-8").write(s2)
 PY
 
-sed -i 's/versionCode: 1$/versionCode: 4/' "$DEC/apktool.yml"
-sed -i 's/versionName: 0.1-scaffold/versionName: 1.0-mobile.4/' "$DEC/apktool.yml"
+sed -i 's/versionCode: 1$/versionCode: 5/' "$DEC/apktool.yml"
+sed -i 's/versionName: 0.1-scaffold/versionName: 1.0-mobile.5/' "$DEC/apktool.yml"
 
-echo "Parche aplicado: '$APP_NAME' ($NEW_PACKAGE) con botones GUARDAR/CARGAR y menú de Trucos"
+echo "Parche aplicado: '$APP_NAME' ($NEW_PACKAGE) con controles estilo PlayStation, GUARDAR / CARGAR / MENÚ y Trucos"
