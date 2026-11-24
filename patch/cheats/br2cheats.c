@@ -80,25 +80,85 @@ CHEAT(imagenes,   { 0x801C0FFCu, 0xFFFF }, { 0x801C0FFEu, 0xFFFF },
                   { 0x801C1000u, 0xFFFF }, { 0x801C1002u, 0xFFFF },
                   { 0x801C1004u, 0xFFFF })
 
-/* --- Vida infinita (código) ---------------------------------------------- */
-CHEAT(vida_j1,    { 0x80178A5Cu, 0x0100 }, { 0x80178A5Eu, 0x3221 },
-                  { 0x80178A64u, 0x000D }, { 0x80178A66u, 0x1020 })
-CHEAT(vida_j2,    { 0x80178A5Cu, 0x0100 }, { 0x80178A5Eu, 0x3221 },
-                  { 0x80178A64u, 0x000D }, { 0x80178A66u, 0x1420 })
-CHEAT(vida_ambos, { 0x80178A9Au, 0x2400 })
+/* --- Vida y bestia (datos de cada luchador) ------------------------------
+ * Los GameShark de vida y bestia cambian instrucciones del juego, y en este
+ * motor no hacían efecto (probado en el celular: la barra de bestia no se
+ * quedaba llena). Por eso se reescriben los datos del luchador en cada
+ * VBlank. Las direcciones salen del ejecutable SCUS_944.24:
+ *
+ *  - Los dos luchadores viven en el scratchpad de la PS1 (0x1F800000):
+ *    J1 en 0x1F8000E8 y J2 en 0x1F8001F0 (0x108 bytes cada uno). La función
+ *    del fotograma (0x801664A4) llama a 0x80178584 con esas dos direcciones.
+ *  - +0xAC vida actual, +0xAE vida recuperable, +0xB0 vida máxima.
+ *  - +0xD6 barra de bestia visible: 0..0x3BFF (0x1E00 = la mitad, que es con
+ *    lo que se empieza cada round; -1 = vacía). +0xD8 = lo que se le va a
+ *    sumar o restar en el siguiente fotograma.
+ *
+ * Como el scratchpad lo usan otras partes del juego (menús, videos), solo se
+ * escribe si los datos parecen de un luchador en pelea. */
+#define FIGHTER_P1 0x1F8000E8u
+#define FIGHTER_P2 0x1F8001F0u
+#define F_MODEL    0x38u
+#define F_HP       0xACu
+#define F_HP_BLUE  0xAEu
+#define F_HP_MAX   0xB0u
+#define F_BEAST    0xD6u
+#define F_BEAST_IN 0xD8u
+#define BEAST_FULL  0x3BFF
+#define BEAST_START 0x1E00
+#define BEAST_START_FULL 0x3A00 /* lo mismo que el GameShark original */
 
-/* --- Barra de bestia (código) -------------------------------------------- */
-/* Infinita = la versión "bloqueando" + la versión "sin bloquear". */
-CHEAT(bestia_j1,  { 0x80144B44u, 0x0100 }, { 0x80144B46u, 0x3221 },
-                  { 0x80144B7Cu, 0x0007 }, { 0x80144B7Eu, 0x1020 },
-                  { 0x80144814u, 0x0100 }, { 0x80144816u, 0x3221 },
-                  { 0x80144868u, 0x0007 }, { 0x8014486Au, 0x1020 })
-CHEAT(bestia_j2,  { 0x80144B44u, 0x0100 }, { 0x80144B46u, 0x3221 },
-                  { 0x80144B7Cu, 0x0007 }, { 0x80144B7Eu, 0x1420 },
-                  { 0x80144814u, 0x0100 }, { 0x80144816u, 0x3221 },
-                  { 0x80144868u, 0x0007 }, { 0x8014486Au, 0x1420 })
-CHEAT(bestia_ambos, { 0x80144B9Au, 0x2400 }, { 0x80144882u, 0x2400 })
-CHEAT(bestia_llena, { 0x8017570Cu, 0x3A00 })
+static short sh16(u32 addr) { return (short)psx_mod_read_half(addr); }
+
+static int fighter_ok(u32 f, int index) {
+    u32 model;
+    short hp, hp_max, beast;
+    if (!psx_mod_game_started()) return 0;
+    (void)index;
+    model = psx_mod_read_word(f + F_MODEL);
+    if (model < 0x80010000u || model >= 0x80200000u) return 0;
+    hp_max = sh16(f + F_HP_MAX);
+    hp = sh16(f + F_HP);
+    beast = sh16(f + F_BEAST);
+    if (hp_max <= 0 || hp > hp_max) return 0;
+    if (beast < -1 || beast > BEAST_FULL) return 0;
+    return 1;
+}
+
+static void set_half(u32 addr, short value) {
+    if (sh16(addr) != value) psx_mod_write_half(addr, (u16)value);
+}
+
+static void full_health(u32 f, int index) {
+    short hp_max;
+    if (!fighter_ok(f, index)) return;
+    hp_max = sh16(f + F_HP_MAX);
+    set_half(f + F_HP, hp_max);
+    set_half(f + F_HP_BLUE, hp_max);
+}
+
+static void full_beast(u32 f, int index) {
+    if (!fighter_ok(f, index)) return;
+    set_half(f + F_BEAST_IN, 0);
+    set_half(f + F_BEAST, BEAST_FULL);
+}
+
+/* Al empezar cada round el juego pone la barra en la mitad (0x1E00) con la
+ * vida llena: en ese momento se sube a casi llena. */
+static void start_beast(u32 f, int index) {
+    if (!fighter_ok(f, index)) return;
+    if (sh16(f + F_BEAST) == BEAST_START && sh16(f + F_BEAST_IN) == 0
+            && sh16(f + F_HP) == sh16(f + F_HP_MAX))
+        psx_mod_write_half(f + F_BEAST, BEAST_START_FULL);
+}
+
+static void cb_vida_j1(void)       { full_health(FIGHTER_P1, 0); }
+static void cb_vida_j2(void)       { full_health(FIGHTER_P2, 1); }
+static void cb_vida_ambos(void)    { cb_vida_j1(); cb_vida_j2(); }
+static void cb_bestia_j1(void)     { full_beast(FIGHTER_P1, 0); }
+static void cb_bestia_j2(void)     { full_beast(FIGHTER_P2, 1); }
+static void cb_bestia_ambos(void)  { cb_bestia_j1(); cb_bestia_j2(); }
+static void cb_bestia_llena(void)  { start_beast(FIGHTER_P1, 0); start_beast(FIGHTER_P2, 1); }
 
 /* --- Otros (código) ------------------------------------------------------- */
 CHEAT(tiempo,     { 0x80151356u, 0x2400 })

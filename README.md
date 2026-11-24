@@ -40,6 +40,14 @@ y le agrega lo que le faltaba para jugarlo cómodo en el celular:
 
 ## Novedades
 
+### v1.0-mobile.6 — Vida y bestia infinitas que sí funcionan
+- **Bestia infinita** ahora deja la barra **siempre llena**: aunque vuelvas a ser humano (Beast Drive,
+  golpe fuerte), puedes transformarte otra vez de inmediato.
+- **Vida infinita** y **Bestia llena al empezar** rehechos de la misma forma.
+- Antes eran códigos GameShark que cambian instrucciones del juego, y en este motor no hacían efecto
+  (probado en el celular). Ahora se reescriben los datos de cada luchador en cada cuadro; las direcciones
+  se sacaron analizando el ejecutable del juego (`SCUS_944.24`).
+
 ### v1.0-mobile.5 — Controles estilo PlayStation y botón MENÚ
 - **Controles táctiles nuevos**, con aspecto de control de PlayStation (ver [Controles](#controles)).
   Se siguen moviendo y cambiando de tamaño en *Controls Customize*.
@@ -189,9 +197,9 @@ sí, igual que los dos turbos. Con pantalla ancha, los controles táctiles tapan
 | | Todo el modo Custom | Datos |
 | | Todas las películas | Datos |
 | | Todas las imágenes | Datos |
-| Combate | Vida infinita J1 · J2 · J1 y J2 | Código |
-| | Bestia infinita J1 · J2 · J1 y J2 | Código |
-| | Bestia llena al empezar | Código |
+| Combate | Vida infinita J1 · J2 · J1 y J2 | Datos |
+| | Bestia infinita J1 · J2 · J1 y J2 (barra siempre llena) | Datos |
+| | Bestia llena al empezar | Datos |
 | | Tiempo infinito | Código |
 | Otros | Una sola pelea para ganar (arcade) | Código |
 | | Golpes a cualquier distancia | Código |
@@ -295,7 +303,11 @@ en su propio hilo de emulación. Todos viven en `libbr2cheats.so`.
 4. En cada VBlank, cada truco activo aplica sus códigos GameShark (tipo `80`, 16 bits):
    - **Datos** (tabla de desbloqueos `0x801C0Fxx`): se reescriben en cada VBlank, como un GameShark,
      porque el juego limpia la tabla al entrar a los menús.
-   - **Código** (dentro del ejecutable, `0x8011E800–0x801BF000`): este motor recompila el juego a
+   - **Luchadores** (vida y bestia): los dos viven en el *scratchpad* de la PS1, J1 en `0x1F8000E8`
+     y J2 en `0x1F8001F0`. Vida en `+0xAC` (máximo `+0xB0`), barra de bestia en `+0xD6` (0 a `0x3BFF`;
+     cada round empieza en `0x1E00`). Solo se escribe si los datos parecen de un luchador en pelea,
+     porque el juego usa esa memoria para otras cosas en los menús.
+   - **Código** (dentro del ejecutable, `0x8011E800–0x801BF000`; tiempo, una pelea y distancia): este motor recompila el juego a
      código nativo, así que escribir la RAM no basta. Se usa `psx_mod_write_code_word()`, que manda
      esa instrucción al intérprete del motor. Solo se escribe si cambió (en la práctica, una vez).
 
