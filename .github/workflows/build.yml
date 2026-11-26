@@ -9,8 +9,8 @@ name: Construir Bloody Roar 2 Mobile
 # Secretos necesarios (Settings > Secrets and variables > Actions):
 #   KEYSTORE_BASE64    la llave br2mobile.jks convertida a base64
 #   KEYSTORE_PASSWORD  la contraseña de esa llave
-# Sin ellos el APK sale firmado con una llave temporal (no se podrá
-# instalar encima de una versión firmada con tu llave).
+# Sin ellos el proceso falla y no publica nada (antes se firmaba con la llave
+# de depuración pública, y los antivirus marcaban la app como virus).
 
 on:
   push:
@@ -85,8 +85,10 @@ jobs:
               --ksPass "$KEYSTORE_PASSWORD" --ksKeyPass "$KEYSTORE_PASSWORD"
             rm -f br2mobile.jks
           else
-            echo "::warning::Sin KEYSTORE_BASE64: se firma con llave temporal"
-            java -jar tools/signer.jar -a unsigned.apk -o signed
+            # La llave de depuración pública hace que los antivirus marquen la
+            # app como virus y no deja instalar encima: mejor no publicar nada.
+            echo "::error::Falta el secreto KEYSTORE_BASE64 (tu llave br2mobile.jks). No se publica un APK con la llave pública."
+            exit 1
           fi
           VERSION=$(grep versionName dec/apktool.yml | awk '{print $2}')
           mv signed/*.apk "BloodyRoar2Mobile-v${VERSION}.apk"

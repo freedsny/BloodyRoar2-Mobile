@@ -179,7 +179,7 @@ assert s2 != s, "no encontré el texto del botón Mods"
 open(layout_path, "w", encoding="utf-8").write(s2)
 PY
 
-sed -i 's/versionCode: 1$/versionCode: 6/' "$DEC/apktool.yml"
-sed -i 's/versionName: 0.1-scaffold/versionName: 1.0-mobile.6/' "$DEC/apktool.yml"
+sed -i 's/versionCode: 1$/versionCode: 7/' "$DEC/apktool.yml"
+sed -i 's/versionName: 0.1-scaffold/versionName: 1.0-mobile.7/' "$DEC/apktool.yml"
 
 echo "Parche aplicado: '$APP_NAME' ($NEW_PACKAGE) con controles estilo PlayStation, GUARDAR / CARGAR / MENÚ y Trucos"

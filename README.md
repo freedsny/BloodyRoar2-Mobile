@@ -40,6 +40,15 @@ y le agrega lo que le faltaba para jugarlo cómodo en el celular:
 
 ## Novedades
 
+### v1.0-mobile.7 — Firmada con llave propia
+- El APK ahora se firma con la llave propia del proyecto (`br2mobile.jks`, en los secretos del repo).
+- Antes se firmaba con la llave de depuración pública que trae uber-apk-signer. Esa misma llave la usan
+  muchas apps modificadas, y por eso el antivirus del celular marcaba la app como virus aunque solo
+  pide un permiso (leer archivos) y no tiene ni internet ni SMS.
+- **Hay que desinstalar la versión anterior una vez** (cambia la llave). De aquí en adelante se
+  instala encima.
+- Si falta la llave, GitHub Actions ya no publica nada, en vez de publicar un APK con la llave pública.
+
 ### v1.0-mobile.6 — Vida y bestia infinitas que sí funcionan
 - **Bestia infinita** ahora deja la barra **siempre llena**: aunque vuelvas a ser humano (Beast Drive,
   golpe fuerte), puedes transformarte otra vez de inmediato.
@@ -104,9 +113,9 @@ y le agrega lo que le faltaba para jugarlo cómodo en el celular:
    archivo `BloodyRoar2Mobile-v….apk`.
 2. Ábrelo en el celular y permite instalar apps de origen desconocido si te lo pide.
 
-**Actualizar:** desde la v1.0-mobile.2 todas las versiones están firmadas con la misma llave, así que
-la nueva se instala **encima**, sin desinstalar, y conservas tus partidas y la memory card.
-Si vienes de la v1.0-mobile.1 hay que desinstalarla una vez, porque tenía otra llave.
+**Actualizar:** desde la v1.0-mobile.7 todas las versiones se firman con la llave propia del proyecto,
+así que la nueva se instala **encima**, sin desinstalar, y conservas tus partidas y la memory card.
+Si vienes de una versión anterior a la v1.0-mobile.7 hay que desinstalarla una vez, porque tenía otra llave.
 
 > ⚠️ Desinstalar la app borra la partida guardada y la memory card, porque viven dentro de la app.
 
@@ -316,9 +325,12 @@ APK), y el plugin se probó con un motor simulado.
 
 ### Firma
 
-Sin los secretos `KEYSTORE_BASE64` / `KEYSTORE_PASSWORD`, el APK se firma con la llave de depuración
-que trae uber-apk-signer, que es **siempre la misma**; por eso las versiones se instalan una encima
-de otra. Configurar una llave propia más adelante obligaría a desinstalar una vez.
+El APK se firma con la llave propia `br2mobile.jks` (alias `br2mobile`, RSA 4096, válida hasta 2054),
+guardada en los secretos del repositorio `KEYSTORE_BASE64` y `KEYSTORE_PASSWORD`. Si faltan, el
+proceso falla a propósito y no publica nada.
+
+> ⚠️ Guarda una copia de `br2mobile.jks` y su contraseña fuera de GitHub. Si se pierden, las versiones
+> nuevas no se podrán instalar encima de las anteriores.
 
 ## Sacar una versión nueva
 
